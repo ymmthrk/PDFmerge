@@ -1,0 +1,9 @@
+.claude_data/
+venv/
+dist/
+build/
+__pycache__/
+*.pyc
+*.pyo
+testdata_PDF/
+*.spec.bak

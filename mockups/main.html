@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDFmerge - モックアップ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .window {
+            width: 800px;
+            min-width: 600px;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        /* タイトルバー */
+        .title-bar {
+            background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%);
+            border-bottom: 1px solid #cccccc;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar h1 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-controls button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-minimize { background-color: #ffbd2e; }
+        .btn-close { background-color: #ff5f57; }
+
+        /* メインコンテンツ */
+        .content {
+            padding: 24px;
+        }
+
+        /* ドロップエリア */
+        .drop-area {
+            border: 2px dashed #0078d4;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #f8fbff;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .drop-area:hover {
+            background-color: #e8f4ff;
+            border-color: #005a9e;
+        }
+
+        .drop-area.drag-over {
+            background-color: #d0e8ff;
+            border-color: #005a9e;
+        }
+
+        .drop-area-icon {
+            font-size: 48px;
+            color: #0078d4;
+            margin-bottom: 12px;
+        }
+
+        .drop-area-text {
+            color: #666666;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .btn-select-file {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-select-file:hover {
+            background-color: #005a9e;
+        }
+
+        /* ファイルリストセクション */
+        .file-list-section {
+            margin-bottom: 24px;
+        }
+
+        .file-list-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 12px;
+        }
+
+        /* ファイルリストテーブル */
+        .file-list-container {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .file-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .file-list-table th {
+            background-color: #f5f5f5;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555555;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .file-list-table th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .file-list-table th:nth-child(3) {
+            width: 100px;
+        }
+
+        .file-list-table th:nth-child(4) {
+            width: 80px;
+        }
+
+        .file-list-table th:last-child {
+            width: 50px;
+            text-align: center;
+        }
+
+        .file-list-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333333;
+        }
+
+        .file-list-table td:first-child {
+            text-align: center;
+            color: #888888;
+        }
+
+        .file-list-table td:last-child {
+            text-align: center;
+        }
+
+        .file-list-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .file-list-table tr:hover {
+            background-color: #f8f8f8;
+        }
+
+        .file-list-table tr.selected {
+            background-color: #e8f4ff;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #cc0000;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-delete:hover {
+            background-color: #ffeeee;
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #888888;
+            font-size: 14px;
+        }
+
+        /* 操作ボタン */
+        .list-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-control {
+            background-color: #f5f5f5;
+            border: 1px solid #cccccc;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333333;
+        }
+
+        .btn-control:hover {
+            background-color: #e8e8e8;
+            border-color: #999999;
+        }
+
+        .btn-control:disabled {
+            background-color: #f5f5f5;
+            border-color: #e0e0e0;
+            color: #aaaaaa;
+            cursor: not-allowed;
+        }
+
+        /* 区切り線 */
+        .divider {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 24px 0;
+        }
+
+        /* 結合ボタン */
+        .action-area {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-merge {
+            background-color: #107c10;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-merge:hover {
+            background-color: #0b5c0b;
+        }
+
+        .btn-merge:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* ステータスバー */
+        .status-bar {
+            background-color: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <!-- タイトルバー -->
+        <div class="title-bar">
+            <h1>PDFmerge</h1>
+            <div class="window-controls">
+                <button class="btn-minimize" title="最小化"></button>
+                <button class="btn-close" title="閉じる"></button>
+            </div>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <div class="content">
+            <!-- ドロップエリア -->
+            <div class="drop-area" id="dropArea">
+                <div class="drop-area-icon">📄</div>
+                <p class="drop-area-text">ここにファイルをドラッグ&ドロップ<br>または</p>
+                <button class="btn-select-file">ファイルを選択</button>
+            </div>
+
+            <!-- ファイルリスト -->
+            <div class="file-list-section">
+                <div class="file-list-header">ファイルリスト:</div>
+                <div class="file-list-container">
+                    <table class="file-list-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ファイル名</th>
+                                <th>サイズ</th>
+                                <th>ページ</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListBody">
+                            <!-- サンプルデータ -->
+                            <tr class="selected">
+                                <td>1</td>
+                                <td>契約書_2026年度.pdf</td>
+                                <td>1.2 MB</td>
+                                <td>5</td>
+                                <td><button class="btn-delete" title="削除">×</button></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>見積書_A社様.pdf</td>
+                                <td>856 KB</td>
+                                <td>3</td>
+                                <td><button class="btn-delete" title="削除">×</button></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>仕様書_最終版.pdf</td>
+                                <td>2.1 MB</td>
+                                <td>12</td>
+                                <td><button class="btn-delete" title="削除">×</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- リスト操作ボタン -->
+                <div class="list-controls">
+                    <button class="btn-control">▲ 上へ</button>
+                    <button class="btn-control">▼ 下へ</button>
+                    <button class="btn-control">クリア</button>
+                </div>
+            </div>
+
+            <!-- 区切り線 -->
+            <hr class="divider">
+
+            <!-- 結合ボタン -->
+            <div class="action-area">
+                <button class="btn-merge">結合して保存</button>
+            </div>
+        </div>
+
+        <!-- ステータスバー -->
+        <div class="status-bar">
+            3 ファイル / 合計 20 ページ
+        </div>
+    </div>
+
+    <script>
+        // ドラッグ&ドロップのビジュアルフィードバック（デモ用）
+        const dropArea = document.getElementById('dropArea');
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            alert('ファイルがドロップされました（デモ）');
+        });
+
+        // 行選択のデモ
+        document.querySelectorAll('.file-list-table tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                document.querySelectorAll('.file-list-table tbody tr').forEach(r => r.classList.remove('selected'));
+                row.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>
