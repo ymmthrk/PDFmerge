@@ -24,6 +24,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from ui.main_window import MainWindow
+from version import VERSION, APP_NAME
 
 
 def main():
@@ -34,8 +35,8 @@ def main():
     )
 
     app = QApplication(sys.argv)
-    app.setApplicationName("PDFmerge")
-    app.setApplicationVersion("1.0.0")
+    app.setApplicationName(APP_NAME)
+    app.setApplicationVersion(VERSION)
 
     # 日本語フォント設定
     font = QFont()

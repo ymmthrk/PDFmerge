@@ -20,6 +20,7 @@ a = Analysis(
     datas=[
         ('src/ui', 'ui'),
         ('src/core', 'core'),
+        ('src/version.py', '.'),
     ],
     hiddenimports=[
         'pikepdf',
@@ -71,4 +72,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=None,
+    version='version_info.txt',
 )

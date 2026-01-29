@@ -23,6 +23,7 @@ from ui.rotation_dialog import RotationDialog
 from ui.preview_window import PreviewWindow
 from ui.page_order_dialog import PageOrderDialog
 from ui.page_extract_dialog import PageExtractDialog
+from version import VERSION, APP_NAME, COPYRIGHT, DESCRIPTION
 
 
 class DropArea(QFrame):
@@ -262,7 +263,7 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self):
         """UIを構築"""
-        self.setWindowTitle("PDFmerge")
+        self.setWindowTitle(f"{APP_NAME} v{VERSION}")
         self.setMinimumSize(800, 600)
         self.resize(1000, 700)
 
@@ -356,6 +357,22 @@ class MainWindow(QMainWindow):
 
         # アクションボタン
         action_layout = QHBoxLayout()
+
+        self.btn_about = QPushButton("About")
+        self.btn_about.setStyleSheet("""
+            QPushButton {
+                background-color: #f5f5f5;
+                border: 1px solid #cccccc;
+                padding: 8px 14px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #e8e8e8;
+            }
+        """)
+        action_layout.addWidget(self.btn_about)
+
         action_layout.addStretch()
 
         self.btn_preview = QPushButton("プレビュー")
@@ -423,6 +440,7 @@ class MainWindow(QMainWindow):
         self.btn_page_order.clicked.connect(self._on_page_order)
         self.btn_page_extract.clicked.connect(self._on_page_extract)
         self.btn_clear.clicked.connect(self._on_clear)
+        self.btn_about.clicked.connect(self._on_about)
         self.btn_preview.clicked.connect(self._on_preview)
         self.btn_merge.clicked.connect(self._on_merge)
         self.file_table.itemSelectionChanged.connect(self._on_selection_changed)
@@ -696,6 +714,20 @@ class MainWindow(QMainWindow):
             self._update_status_bar()
             self._update_button_states()
             self.thumbnail_panel.clear()
+
+    def _on_about(self):
+        """Aboutダイアログを表示"""
+        QMessageBox.about(
+            self,
+            f"About {APP_NAME}",
+            f"<h2>{APP_NAME}</h2>"
+            f"<p>Version {VERSION}</p>"
+            f"<p>{DESCRIPTION}</p>"
+            f"<p>{COPYRIGHT}</p>"
+            f"<hr>"
+            f"<p>ローカルで動作するPDF結合ツール</p>"
+            f"<p>機能: 結合・回転・ページ順序変更・ページ抽出</p>"
+        )
 
     def _on_preview(self):
         """プレビューウィンドウを表示"""
