@@ -23,6 +23,7 @@ from ui.rotation_dialog import RotationDialog
 from ui.preview_window import PreviewWindow
 from ui.page_order_dialog import PageOrderDialog
 from ui.page_extract_dialog import PageExtractDialog
+from ui.password_dialog import PasswordDialog
 from version import VERSION, APP_NAME, COPYRIGHT, DESCRIPTION
 
 
@@ -495,6 +496,14 @@ class MainWindow(QMainWindow):
 
             try:
                 pdf_info = PDFInfo(path)
+
+                # パスワード保護されている場合はパスワード入力を求める
+                if pdf_info.needs_password:
+                    pdf_info = self._handle_password_protected_pdf(path)
+                    if pdf_info is None:
+                        # キャンセルされた
+                        continue
+
                 if pdf_info.is_valid:
                     self.pdf_list.append(pdf_info)
                     added += 1
@@ -519,6 +528,44 @@ class MainWindow(QMainWindow):
                 return True
         return False
 
+    def _handle_password_protected_pdf(self, path: str) -> Optional[PDFInfo]:
+        """パスワード保護されたPDFの処理"""
+        filename = Path(path).name
+
+        while True:
+            # パスワード入力ダイアログを表示
+            dialog = PasswordDialog(filename, self)
+            if dialog.exec() != PasswordDialog.Accepted:
+                # キャンセルされた
+                return None
+
+            password = dialog.get_password()
+            if not password:
+                continue
+
+            # パスワードを使ってPDFを開いてみる
+            pdf_info = PDFInfo(path, password=password)
+
+            if pdf_info.is_valid:
+                return pdf_info
+
+            # パスワードが間違っている場合
+            if pdf_info.needs_password:
+                QMessageBox.warning(
+                    self,
+                    "パスワードエラー",
+                    "パスワードが正しくありません。\nもう一度入力してください。"
+                )
+                continue
+            else:
+                # 他のエラー
+                QMessageBox.warning(
+                    self,
+                    "エラー",
+                    f"PDFを開けませんでした:\n{pdf_info.error_message}"
+                )
+                return None
+
     def _refresh_table(self):
         """テーブルを更新"""
         self.file_table.setRowCount(len(self.pdf_list))
@@ -530,8 +577,11 @@ class MainWindow(QMainWindow):
             num_item.setFlags(num_item.flags() & ~Qt.ItemIsEditable)
             self.file_table.setItem(i, 0, num_item)
 
-            # ファイル名（回転・順序・抽出情報付き）
-            name_text = pdf_info.filename
+            # ファイル名（パスワード保護・回転・順序・抽出情報付き）
+            name_text = ""
+            if pdf_info.is_encrypted:
+                name_text = "🔒 "
+            name_text += pdf_info.filename
             indicators = []
             if pdf_info.page_rotations:
                 indicators.append("🔄")

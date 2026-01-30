@@ -106,7 +106,7 @@ class PreviewWindow(QDialog):
             output_pdf = pikepdf.Pdf.new()
 
             for pdf_info in self.pdf_list:
-                with pikepdf.open(pdf_info.filepath) as pdf:
+                with pikepdf.open(pdf_info.filepath, password=pdf_info.password or "") as pdf:
                     # 使用するページのインデックスリストを決定
                     if pdf_info.selected_pages is not None and pdf_info.page_order is not None:
                         # 抽出対象のページを、指定された順序で並べ替え
