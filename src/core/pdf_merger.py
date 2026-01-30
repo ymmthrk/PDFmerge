@@ -46,8 +46,8 @@ class PDFMergerWorker(QThread):
                 progress_value = int((i / total_files) * 100)
                 self.progress.emit(progress_value)
 
-                # PDFを開いてページを追加
-                with pikepdf.open(pdf_info.filepath) as pdf:
+                # PDFを開いてページを追加（パスワード保護の場合はパスワードを指定）
+                with pikepdf.open(pdf_info.filepath, password=pdf_info.password or "") as pdf:
                     # 使用するページのインデックスリストを決定
                     if pdf_info.selected_pages is not None:
                         # 抽出ページが指定されている場合
