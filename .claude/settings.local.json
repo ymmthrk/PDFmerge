@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -m pip:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(python:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(cmd.exe /c \"rd /s /q venv backend frontend .appgenius_temp .claude_data\")",
+      "Bash(powershell.exe -Command \"Remove-Item -Path ''backend'',''frontend'',''.appgenius_temp'',''.claude_data'' -Recurse -Force -ErrorAction SilentlyContinue; Write-Host ''Small dirs done''\")",
+      "Bash(powershell.exe -Command \"Remove-Item -Path ''venv'' -Recurse -Force; Write-Host ''venv done''\")",
+      "Bash(source venv/Scripts/activate)"
+    ]
+  }
+}
