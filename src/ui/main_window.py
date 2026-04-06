@@ -19,6 +19,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QPixmap
 
 from core.pdf_info import PDFInfo
 from core.pdf_merger import PDFMergerWorker
+from core.image_converter import ImageConverter, is_supported_image, get_image_filter_string
 from ui.rotation_dialog import RotationDialog
 from ui.preview_window import PreviewWindow
 from ui.page_order_dialog import PageOrderDialog
@@ -56,7 +57,7 @@ class DropArea(QFrame):
         icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(icon_label)
 
-        text_label = QLabel("ここにファイルをドラッグ&ドロップ または")
+        text_label = QLabel("ここにPDF・画像ファイルをドラッグ&ドロップ または")
         text_label.setStyleSheet("color: #666666; font-size: 12px; border: none;")
         text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
@@ -257,10 +258,16 @@ class MainWindow(QMainWindow):
         self.pdf_list: List[PDFInfo] = []
         self.worker: Optional[PDFMergerWorker] = None
         self.progress_dialog: Optional[QProgressDialog] = None
+        self.image_converter = ImageConverter()
 
         self._setup_ui()
         self._connect_signals()
         self._update_button_states()
+
+    def closeEvent(self, event):
+        """ウィンドウ閉じる時に一時ファイルをクリーンアップ"""
+        self.image_converter.cleanup()
+        super().closeEvent(event)
 
     def _setup_ui(self):
         """UIを構築"""
@@ -463,11 +470,15 @@ class MainWindow(QMainWindow):
 
     def _on_select_files(self):
         """ファイル選択ダイアログを開く"""
+        image_filter = get_image_filter_string()
         files, _ = QFileDialog.getOpenFileNames(
             self,
-            "PDFファイルを選択",
+            "ファイルを選択",
             "",
-            "PDFファイル (*.pdf);;すべてのファイル (*.*)"
+            f"対応ファイル (*.pdf *.jpg *.jpeg *.png *.bmp *.tiff *.tif *.gif *.webp);;"
+            f"PDFファイル (*.pdf);;"
+            f"{image_filter};;"
+            f"すべてのファイル (*.*)"
         )
         if files:
             self._add_files(files)
@@ -477,13 +488,16 @@ class MainWindow(QMainWindow):
         self._add_files(files)
 
     def _add_files(self, file_paths: List[str]):
-        """ファイルを追加"""
+        """ファイルを追加（PDF・画像対応）"""
         added = 0
         errors = []
 
         for path in file_paths:
-            if not path.lower().endswith('.pdf'):
-                errors.append(f"{Path(path).name}: PDFファイルではありません")
+            is_pdf = path.lower().endswith('.pdf')
+            is_image = is_supported_image(path)
+
+            if not is_pdf and not is_image:
+                errors.append(f"{Path(path).name}: 対応していないファイル形式です")
                 continue
 
             if self._is_duplicate(path):
@@ -495,7 +509,12 @@ class MainWindow(QMainWindow):
                 continue
 
             try:
-                pdf_info = PDFInfo(path)
+                if is_image:
+                    # 画像→PDF変換
+                    temp_pdf_path = self.image_converter.convert_to_pdf(path)
+                    pdf_info = PDFInfo(temp_pdf_path, original_image_path=path)
+                else:
+                    pdf_info = PDFInfo(path)
 
                 # パスワード保護されている場合はパスワード入力を求める
                 if pdf_info.needs_password:
@@ -522,9 +541,11 @@ class MainWindow(QMainWindow):
             self._update_button_states()
 
     def _is_duplicate(self, path: str) -> bool:
-        """重複チェック"""
+        """重複チェック（元画像パスも考慮）"""
         for pdf_info in self.pdf_list:
             if pdf_info.filepath == path:
+                return True
+            if pdf_info.original_image_path and pdf_info.original_image_path == path:
                 return True
         return False
 
@@ -577,9 +598,11 @@ class MainWindow(QMainWindow):
             num_item.setFlags(num_item.flags() & ~Qt.ItemIsEditable)
             self.file_table.setItem(i, 0, num_item)
 
-            # ファイル名（パスワード保護・回転・順序・抽出情報付き）
+            # ファイル名（画像変換・パスワード保護・回転・順序・抽出情報付き）
             name_text = ""
-            if pdf_info.is_encrypted:
+            if pdf_info.original_image_path:
+                name_text = "🖼 "
+            elif pdf_info.is_encrypted:
                 name_text = "🔒 "
             name_text += pdf_info.filename
             indicators = []
@@ -594,7 +617,10 @@ class MainWindow(QMainWindow):
             name_item = QTableWidgetItem(name_text)
             name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
             # ツールチップに詳細を表示
-            tooltip = pdf_info.filepath
+            if pdf_info.original_image_path:
+                tooltip = f"元画像: {pdf_info.original_image_path}"
+            else:
+                tooltip = pdf_info.filepath
             if pdf_info.page_order is not None:
                 tooltip += f"\n順序変更: {len(pdf_info.page_order)}ページ"
             if pdf_info.selected_pages is not None:
@@ -737,9 +763,15 @@ class MainWindow(QMainWindow):
         for row in range(self.file_table.rowCount()):
             name_item = self.file_table.item(row, 1)
             if name_item:
-                filepath = name_item.toolTip()
+                tooltip = name_item.toolTip()
+                # ツールチップの最初の行からパスを取得
+                tooltip_path = tooltip.split("\n")[0]
+                # 「元画像: 」プレフィックスを除去
+                if tooltip_path.startswith("元画像: "):
+                    tooltip_path = tooltip_path[len("元画像: "):]
                 for pdf_info in self.pdf_list:
-                    if pdf_info.filepath == filepath:
+                    match_path = pdf_info.original_image_path or pdf_info.filepath
+                    if match_path == tooltip_path:
                         new_list.append(pdf_info)
                         break
         self.pdf_list = new_list
@@ -776,7 +808,7 @@ class MainWindow(QMainWindow):
             f"<p>{COPYRIGHT}</p>"
             f"<hr>"
             f"<p>ローカルで動作するPDF結合ツール</p>"
-            f"<p>機能: 結合・回転・ページ順序変更・ページ抽出</p>"
+            f"<p>機能: 結合・回転・ページ順序変更・ページ抽出・画像変換</p>"
         )
 
     def _on_preview(self):
