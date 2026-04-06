@@ -1,1 +1,0 @@
-# PDFmerge tkinter版
