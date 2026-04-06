@@ -12,8 +12,6 @@ import atexit
 from pathlib import Path
 from typing import List, Set
 
-import fitz  # PyMuPDF
-
 # A4サイズ（ポイント単位: 72DPI）
 A4_WIDTH = 595.276
 A4_HEIGHT = 841.890
@@ -90,6 +88,7 @@ class ImageConverter:
         画像はアスペクト比を維持し、A4ページの余白内に収まるよう
         スケーリングされ、ページ中央に配置される。
         """
+        import fitz
         doc = fitz.open()
 
         try:

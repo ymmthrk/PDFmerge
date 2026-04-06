@@ -7,8 +7,6 @@ PDF情報クラス
 from pathlib import Path
 from typing import Optional, List, Dict
 
-import pikepdf
-import fitz  # PyMuPDF
 from PySide6.QtGui import QPixmap, QImage
 
 
@@ -39,6 +37,7 @@ class PDFInfo:
 
     def _load_info(self):
         """PDFの情報を読み込む"""
+        import pikepdf
         try:
             path = Path(self.filepath)
             if not path.exists():
@@ -84,6 +83,7 @@ class PDFInfo:
 
     def get_thumbnail(self, page_num: int = 0, width: int = 150) -> Optional[QPixmap]:
         """指定ページのサムネイルを生成"""
+        import fitz
         try:
             # パスワード付きPDFの場合はパスワードを指定して開く
             if self.password:
