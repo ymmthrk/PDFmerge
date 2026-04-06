@@ -19,12 +19,16 @@ else:
 
 sys.path.insert(0, base_path)
 
+# --- Win32スプラッシュを最速で表示（PySide6より先） ---
+from ui.win32_splash import Win32Splash
+splash = Win32Splash()
+
+# --- ここからPySide6のロード（スプラッシュ表示中に実行される） ---
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from ui.main_window import MainWindow
-from version import VERSION, APP_NAME
+from version import APP_NAME, VERSION
 
 
 def main():
@@ -47,7 +51,12 @@ def main():
     # スタイル設定
     app.setStyle("Fusion")
 
+    # メインウィンドウの生成（重い処理はここで発生）
+    from ui.main_window import MainWindow
     window = MainWindow()
+
+    # Win32スプラッシュを閉じてメインウィンドウを表示
+    splash.close()
     window.show()
 
     sys.exit(app.exec())

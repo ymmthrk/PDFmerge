@@ -8,8 +8,6 @@ from typing import List, TYPE_CHECKING
 
 from PySide6.QtCore import QThread, Signal
 
-import pikepdf
-
 if TYPE_CHECKING:
     from core.pdf_info import PDFInfo
 
@@ -33,6 +31,7 @@ class PDFMergerWorker(QThread):
 
     def run(self):
         """結合処理を実行"""
+        import pikepdf
         try:
             output_pdf = pikepdf.Pdf.new()
             total_files = len(self.pdf_list)
