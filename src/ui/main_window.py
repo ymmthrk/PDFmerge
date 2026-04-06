@@ -20,11 +20,6 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QPixmap
 from core.pdf_info import PDFInfo
 from core.pdf_merger import PDFMergerWorker
 from core.image_converter import ImageConverter, is_supported_image, get_image_filter_string
-from ui.rotation_dialog import RotationDialog
-from ui.preview_window import PreviewWindow
-from ui.page_order_dialog import PageOrderDialog
-from ui.page_extract_dialog import PageExtractDialog
-from ui.password_dialog import PasswordDialog
 from version import VERSION, APP_NAME, COPYRIGHT, DESCRIPTION
 
 
@@ -555,6 +550,7 @@ class MainWindow(QMainWindow):
 
         while True:
             # パスワード入力ダイアログを表示
+            from ui.password_dialog import PasswordDialog
             dialog = PasswordDialog(filename, self)
             if dialog.exec() != PasswordDialog.Accepted:
                 # キャンセルされた
@@ -693,6 +689,7 @@ class MainWindow(QMainWindow):
             return
 
         pdf_info = self.pdf_list[row]
+        from ui.rotation_dialog import RotationDialog
         dialog = RotationDialog(pdf_info.page_count, pdf_info.page_rotations, self)
 
         if dialog.exec():
@@ -721,6 +718,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "情報", "このファイルは1ページのみです。")
             return
 
+        from ui.page_order_dialog import PageOrderDialog
         dialog = PageOrderDialog(pdf_info, self)
 
         if dialog.exec():
@@ -743,6 +741,7 @@ class MainWindow(QMainWindow):
             return
 
         pdf_info = self.pdf_list[row]
+        from ui.page_extract_dialog import PageExtractDialog
         dialog = PageExtractDialog(pdf_info, self)
 
         if dialog.exec():
@@ -821,6 +820,7 @@ class MainWindow(QMainWindow):
             )
             return
 
+        from ui.preview_window import PreviewWindow
         preview = PreviewWindow(self.pdf_list, self)
         preview.exec()
 
