@@ -62,7 +62,8 @@ class PDFMergerWorker(QThread):
                     if pdf_info.selected_pages is not None and pdf_info.page_order is not None:
                         # 抽出対象のページを、指定された順序で並べ替え
                         # page_order内で、selected_pagesに含まれるもののみを抽出
-                        page_indices = [p for p in pdf_info.page_order if p in pdf_info.selected_pages]
+                        selected_set = set(pdf_info.selected_pages)
+                        page_indices = [p for p in pdf_info.page_order if p in selected_set]
 
                     for page_idx in page_indices:
                         if self._cancelled:

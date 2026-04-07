@@ -184,7 +184,8 @@ class ThumbnailPanel(QGroupBox):
         # 表示するページのリストを決定
         if pdf_info.selected_pages is not None and pdf_info.page_order is not None:
             # 抽出ページを順序に従って並べ替え
-            page_indices = [p for p in pdf_info.page_order if p in pdf_info.selected_pages]
+            selected_set = set(pdf_info.selected_pages)
+            page_indices = [p for p in pdf_info.page_order if p in selected_set]
         elif pdf_info.selected_pages is not None:
             page_indices = pdf_info.selected_pages
         elif pdf_info.page_order is not None:
@@ -612,6 +613,7 @@ class MainWindow(QMainWindow):
                 name_text += " " + "".join(indicators)
             name_item = QTableWidgetItem(name_text)
             name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+            name_item.setData(Qt.UserRole, i)
             # ツールチップに詳細を表示
             if pdf_info.original_image_path:
                 tooltip = f"元画像: {pdf_info.original_image_path}"
@@ -762,17 +764,9 @@ class MainWindow(QMainWindow):
         for row in range(self.file_table.rowCount()):
             name_item = self.file_table.item(row, 1)
             if name_item:
-                tooltip = name_item.toolTip()
-                # ツールチップの最初の行からパスを取得
-                tooltip_path = tooltip.split("\n")[0]
-                # 「元画像: 」プレフィックスを除去
-                if tooltip_path.startswith("元画像: "):
-                    tooltip_path = tooltip_path[len("元画像: "):]
-                for pdf_info in self.pdf_list:
-                    match_path = pdf_info.original_image_path or pdf_info.filepath
-                    if match_path == tooltip_path:
-                        new_list.append(pdf_info)
-                        break
+                original_index = name_item.data(Qt.UserRole)
+                if original_index is not None and 0 <= original_index < len(self.pdf_list):
+                    new_list.append(self.pdf_list[original_index])
         self.pdf_list = new_list
         self._refresh_table()
 
