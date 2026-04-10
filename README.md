@@ -117,6 +117,8 @@ PDFmerge/
 
 ## ライセンス
 
+このプロジェクトは [AGPL-3.0](LICENSE) ライセンスの下で公開されています。
+
 Copyright (c) 2025 BlueLamp
 
 ## セキュリティ
