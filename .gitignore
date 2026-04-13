@@ -7,3 +7,12 @@ __pycache__/
 *.pyo
 testdata_PDF/
 *.spec.bak
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.idea/
+.vscode/
